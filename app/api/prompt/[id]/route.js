@@ -23,6 +23,10 @@ export const GET = async (request, { params }) => {
 export const PATCH = async (request, { params }) => {
   const { prompt, tag } = await request.json();
 
+  if (!prompt || !prompt.trim() || !tag || !tag.trim()) {
+    return new Response(JSON.stringify({ error: 'Prompt and tag are required' }), { status: 400 });
+  }
+
   try {
     await connectToDB();
 
@@ -31,14 +35,14 @@ export const PATCH = async (request, { params }) => {
       return new Response('Prompt not found', { status: 404 });
     }
 
-    existingPrompt.prompt = prompt;
-    existingPrompt.tag = tag;
+    existingPrompt.prompt = prompt.trim();
+    existingPrompt.tag = tag.trim().replace(/^#/, '').toLowerCase();
 
     await existingPrompt.save();
 
     return new Response(JSON.stringify(existingPrompt), { status: 200 });
   } catch (error) {
-    return new Response(`Failed to update prompt: ${error.message}`, { status: 500 });
+    return new Response(JSON.stringify({ error: `Failed to update prompt: ${error.message}` }), { status: 500 });
   }
 };
 
@@ -48,10 +52,15 @@ export const DELETE = async (req, { params }) => {
   try {
     await connectToDB();
 
-    await Prompt.findByIdAndRemove(params.id);
+    const existing = await Prompt.findById(params.id);
+    if (!existing) {
+      return new Response(JSON.stringify({ error: 'Prompt not found' }), { status: 404 });
+    }
 
-    return new Response('Prompt deleted succesfully', { status: 200 });
+    await Prompt.findByIdAndDelete(params.id);
+
+    return new Response(JSON.stringify({ message: 'Prompt deleted successfully' }), { status: 200 });
   } catch (error) {
-    return new Response(`Failed to delete prompt: ${error.message}`, { status: 500 });
+    return new Response(JSON.stringify({ error: `Failed to delete prompt: ${error.message}` }), { status: 500 });
   }
 };

@@ -1,19 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    appDir: true,
     serverComponentsExternalPackages: ['mongoose'],
   },
   images: {
-    domains: ['lh3.googleusercontent.com', 'avatars.githubusercontent.com'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
+      { protocol: 'https', hostname: 'api.dicebear.com' },
+    ],
   },
-  //   webpack(config) {
-  //     config.experiments = {
-  //       ...config.experiments,
-  //       topLevelAwait: true,
-  //     };
-  //     return config;
-  //   },
 };
 
 module.exports = nextConfig;

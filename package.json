@@ -6,7 +6,8 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:db": "node --env-file=.env.local utils/test-db.js"
   },
   "dependencies": {
     "autoprefixer": "10.4.14",

@@ -1,26 +1,29 @@
 import mongoose from 'mongoose';
 
-let isConnected = false; //track the connection
+let isConnected = false;
 
 export const connectToDB = async () => {
   mongoose.set('strictQuery', true);
 
-  if (isConnected) {
-    console.log('MongoDB is alredy connected');
+  if (isConnected && mongoose.connection.readyState === 1) {
+    console.log('MongoDB is already connected');
     return;
+  }
+
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI is not defined. Please set it in .env.local (see .env.example)');
   }
 
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
       dbName: 'share_prompt',
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
     });
 
     isConnected = true;
 
     console.log('MongoDB connected');
   } catch (error) {
-    console.log(error);
+    console.error('MongoDB connection error:', error);
+    throw error;
   }
 };

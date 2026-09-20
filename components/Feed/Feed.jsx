@@ -31,11 +31,13 @@ const Feed = () => {
     fetchPosts();
   }, []);
 
-  const filterPrompts = searchText => {
-    const regex = new RegExp(searchText, 'i');
+  const escapeRegExp = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+  const filterPrompts = searchText => {
+    if (!searchText) return posts;
+    const regex = new RegExp(escapeRegExp(searchText), 'i');
     return posts.filter(
-      post => regex.test(post.creator.username) || regex.test(post.tag) || regex.test(post.prompt)
+      post => regex.test(post.creator?.username) || regex.test(post.tag) || regex.test(post.prompt)
     );
   };
 
@@ -62,7 +64,7 @@ const Feed = () => {
       <form className="relative w-full flex-center">
         <input
           type="text"
-          placeholder="Search fro tag or username"
+          placeholder="Search for tag or username"
           value={searchText}
           onChange={handleSearchChange}
           required
