@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import PromptCard from '@components/PromptCard/PromptCard';
 
 const PromptCardList = ({ data, handleTagClick }) => {
+  if (!Array.isArray(data) || data.length === 0) {
+    return <p className="mt-16 text-center text-gray-500">No prompts found.</p>;
+  }
   return (
     <ul className="mt-16 prompt_layout">
       {data.map(post => (
@@ -21,11 +24,19 @@ const Feed = () => {
 
   useEffect(() => {
     const fetchPosts = async () => {
-      const response = await fetch('/api/prompt');
-
-      const data = await response.json();
-
-      setPosts(data);
+      try {
+        const response = await fetch('/api/prompt');
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          setPosts(data);
+        } else {
+          console.error('Failed to fetch prompts:', data);
+          setPosts([]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch prompts:', error);
+        setPosts([]);
+      }
     };
 
     fetchPosts();

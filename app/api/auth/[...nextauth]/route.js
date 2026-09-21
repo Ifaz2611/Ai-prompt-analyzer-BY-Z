@@ -1,5 +1,4 @@
 import NextAuth from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { connectToDB } from '@utils/database';
 import User from '@models/user';
@@ -19,22 +18,10 @@ const generateUsername = (name, email) => {
   return base;
 };
 
-const providers = [];
-
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  providers.push(
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    })
-  );
-}
-
-// Fallback credentials provider so the site works without Google OAuth (demo login)
-// Login with any email that exists in DB, or create demo user on the fly in dev
-providers.push(
+const providers = [
   CredentialsProvider({
-    name: 'Demo Login',
+    id: 'credentials',
+    name: 'Sign In',
     credentials: {
       email: { label: 'Email', type: 'text', placeholder: 'demo@example.com' },
       username: { label: 'Username', type: 'text', placeholder: 'demo_user' },
@@ -45,7 +32,7 @@ providers.push(
       const email = credentials.email.toLowerCase().trim();
       let user = await User.findOne({ email });
       if (!user) {
-        // Auto-create demo user for easy testing if no user exists
+        // Auto-create user for easy testing if no user exists
         const rawName = credentials.username || email.split('@')[0];
         let username = generateUsername(rawName, email);
         // Ensure uniqueness with suffix if needed
@@ -64,8 +51,8 @@ providers.push(
       }
       return { id: user._id.toString(), email: user.email, name: user.username, image: user.image };
     },
-  })
-);
+  }),
+];
 
 const handler = NextAuth({
   providers,
@@ -86,39 +73,10 @@ const handler = NextAuth({
       }
     },
 
-    async signIn({ profile, account, user }) {
-      try {
-        await connectToDB();
-
-        // Credentials provider already handled user creation in authorize
-        if (account?.provider === 'credentials') return true;
-
-        if (!profile?.email) return false;
-
-        const userExists = await User.findOne({ email: profile.email });
-
-        if (!userExists) {
-          let username = generateUsername(profile.name, profile.email);
-          let suffix = 0;
-          let candidate = username;
-          while (await User.findOne({ username: candidate })) {
-            suffix += 1;
-            candidate = `${username.slice(0, 18)}${suffix}`;
-          }
-          username = candidate;
-
-          await User.create({
-            email: profile.email,
-            username,
-            image: profile.picture,
-          });
-        }
-
-        return true;
-      } catch (error) {
-        console.log('Error checking if user exists: ', error.message);
-        return false;
-      }
+    async signIn({ account }) {
+      // Only credentials provider is used now; always allow sign-in
+      if (account?.provider === 'credentials') return true;
+      return true;
     },
   },
   pages: {
